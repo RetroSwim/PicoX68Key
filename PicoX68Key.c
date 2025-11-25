@@ -2,11 +2,14 @@
 // by RetroSwim.
 
 // Credits:
-// TinyUSB HID Host implementation example:
+// TinyUSB HID Host implementation example
 // https://github.com/raspberrypi/pico-examples/tree/master/usb/host/host_cdc_msc_hid
 //
 // x68key by Zuofo and Guddler
 // https://github.com/Guddler/x68Key
+//
+// X68000 keyboard protocol information from tmk_keyboard by tmk
+// https://github.com/tmk/tmk_keyboard/wiki/Sharp-Keyboard
 //
 // Requirements:
 // - Raspberry Pi Pico
@@ -21,12 +24,14 @@
 // - VBUS (pin 40)            - Pin 1 (+5VDC)
 // - GND (pin 3,8,13,18,etc)  - Pin 7 (GND)
 //
-
-
+// Optional:
+// - SPI0 on pins MOSI@GP19 SCK@GP18 CS@GP17 for a shift register to show all
+//   the X68000 keyboard LEDs.
 
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/uart.h"
+#include "hardware/spi.h"
 #include "tusb.h"
 #include "PicoX68Key.h"
 #include "bsp/board_api.h"
@@ -47,14 +52,46 @@
 
 #define MOUSE_DIVIDER 0x03
 
+#define LED_BOARD_SPI_MOSI 19
+#define LED_BOARD_SPI_CLK 18
+#define LED_BOARD_SPI_CS 17
+
+#define DEFAULT_KEY_REPEAT_DELAY 500 //ms
+#define DEFAULT_KEY_REPEAT_RATE 110  //ms
+
 void press(uint8_t c);
 void keyDown(uint8_t c);
 void keyUp(uint8_t c);
- 
+void doRepeat();
+void stopRepeat();
+bool timerCallback(struct repeating_timer *t);
+
 // void typeCodeForDebug(uint8_t c);
 // void testMessage()
 
 extern void hid_app_task(void);
+
+uint8_t newKeyCode = 0;
+uint8_t downKeyCode = 0;
+uint32_t keyDownTime = 0;
+uint16_t repeatDelay = DEFAULT_KEY_REPEAT_DELAY;   // ms before first repeat
+struct repeating_timer repeatTimer;
+
+void littleBlink() {
+    gpio_put(PICO_DEFAULT_LED_PIN, 1);
+    sleep_ms(10);
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+}
+
+void ledOn(bool isOn) {
+    gpio_put(PICO_DEFAULT_LED_PIN, isOn);
+}
+
+// Key repeat timer code
+bool timerCallback(struct repeating_timer *t) {
+    doRepeat();
+    return true;
+}
 
 // Press a key
 void press(uint8_t c) {
@@ -81,7 +118,8 @@ void setSpecial(bool enabled) {
 }
 
 // Translate keystrokes from USB Boot Protocol "Usages" to X68000 scan codes
-uint8_t newKeyCode = 0;
+
+bool keyIsDown = false;
 
 void handleKey(uint8_t keycode, uint8_t state) {
     
@@ -99,11 +137,14 @@ void handleKey(uint8_t keycode, uint8_t state) {
     
     if(state == USBKEY_PRESSED) {
         keyDown(newKeyCode);
+        downKeyCode = newKeyCode;
+        keyDownTime = to_ms_since_boot(get_absolute_time());
+        keyIsDown = true;
     }else if(state == USBKEY_RELEASED) {
         keyUp(newKeyCode);
+        if(newKeyCode == downKeyCode) keyIsDown = false;
     }
 }
-
 
 // Accumulate deltas from USB HID Mouse reports.
 uint8_t mouseButtons = 0;
@@ -115,22 +156,11 @@ void handleMouse(uint8_t buttons, int8_t x, int8_t y) {
     mouseButtons = buttons;
 }
 
-// Blink Pico's LED a bit
-void blink() {
-    for(int i = 0; i <= 5; i++){
-        gpio_put(PICO_DEFAULT_LED_PIN, 1);
-        sleep_ms(20);
-        gpio_put(PICO_DEFAULT_LED_PIN, 0);
-        sleep_ms(20);
+void doRepeat() {
+    const uint32_t now = to_ms_since_boot(get_absolute_time());
+    if(keyIsDown && (now - keyDownTime) >= repeatDelay) {
+        keyDown(downKeyCode);
     }
-}
-
-// A lil tiny blink
-void littleBlink() {
-    gpio_put(PICO_DEFAULT_LED_PIN, 1);
-    sleep_ms(30);
-    gpio_put(PICO_DEFAULT_LED_PIN, 0);
-    sleep_ms(30);
 }
 
 int main()
@@ -151,20 +181,26 @@ int main()
     gpio_set_function(MOUSE_UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(MOUSE_UART_RX_PIN, GPIO_FUNC_UART);
 
+    spi_init(spi0, 1000000);
+    gpio_set_function(LED_BOARD_SPI_CLK, GPIO_FUNC_SPI);
+    gpio_set_function(LED_BOARD_SPI_MOSI, GPIO_FUNC_SPI);
+    gpio_init(LED_BOARD_SPI_CS);
 
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+    add_repeating_timer_ms(DEFAULT_KEY_REPEAT_RATE, timerCallback, NULL, &repeatTimer);
     
     while (true) {
         tuh_task();
         hid_app_task();
 
-        // Serial port messages should be rare, so not worth making this interrupt driven.
         while(uart_is_readable(KB_UART_ID)){
 
             const uint8_t thisByte = uart_getc(KB_UART_ID);
 
             // 0x4x replicates the MSCTRL pin on the mouse port. Bit 0 falling means poll now.
+            // 0b01000001 then 0b01000000 = poll
             if(thisByte == 0x40 && lastByte == 0x41){
                 uint8_t mousePacket[3];
                 uint8_t xOvp = 0, xOvn = 0, yOvp = 0, yOvn = 0;
@@ -184,15 +220,77 @@ int main()
 
             }
 
+            // 0x6x sets keyboard repeat rate
+            if((thisByte & 0xf0) == 0x60)
+            {
+                // low nibble	time ms
+                // 0	        30
+                // 1	        35
+                // 2	        50
+                // 3	        75
+                // 4	        110 <-- default
+                // 5	        155
+                // 6	        210
+                // 7	        275
+                // 8	        350
+                // 9	        435
+                // a	        530
+                // b	        635
+                // c	        750
+                // d	        875
+                // e	        1010
+                // f	        1155
+
+                const uint16_t rateByte = thisByte & 0x0f; 
+                const uint16_t rateMs = 30 + ((rateByte ^ 2) * 5);
+                repeatTimer.delay_us = (uint64_t)rateMs * 1000;
+            }
+
+            // 0x7x sets keyboard repeat delay
+            if((thisByte & 0xf0) == 0x70)
+            {
+                // low nibble	time ms
+                // 0	        200
+                // 1	        300
+                // 2	        400
+                // 3	        500 <-- default
+                // 4	        600
+                // 5	        700
+                // 6	        800
+                // 7	        900
+                // 8	        1000
+                // 9	        1100
+                // a	        1200
+                // b	        1300
+                // c	        1400
+                // d	        1500
+                // e	        1600
+                // f	        1700
+
+                const uint16_t delayByte = thisByte & 0x0f; 
+                const uint16_t delayMs = 200 + (delayByte * 100);
+                repeatDelay = delayMs;
+            }
+
             // 0x8x sets the keyboard LEDs.
-            if(thisByte & 0x80) {
-                // CAPS -> CAPS
-                // INS -> NUMLOCK
-                // FULLWIDTH -> SCROLL LOCK
-                // I guess?
+            // bit 6   全角 (Wide)
+            // bit 5   ひらがな (Hiragana)
+            // bit 4   INS
+            // bit 3   CAPS
+            // bit 2   コード入力 (Chord entry)
+            // bit 1   ローマ字 (Roman characters)
+            // bit 0   かな (Kana)
+            if((thisByte & 0x80) == 0x80) {
+                const uint8_t ledBits = thisByte & 0x7f; // lowest 7 bits
+                const uint8_t notLedBits = ~ledBits;     // 0 = on
 
-                set_leds((thisByte >> 4) & 1, (thisByte >> 3) & 1, (thisByte >> 6) & 1);
+                // LEDs on HID keyboard
+                set_leds(notLedBits);
 
+                // LEDs on sub-board
+                gpio_put(LED_BOARD_SPI_CS, 0);
+                spi_write_blocking(spi0, (void *)&notLedBits, 1);
+                gpio_put(LED_BOARD_SPI_CS, 1);
             }
 
             lastByte = thisByte;
@@ -202,7 +300,7 @@ int main()
 }
 
 // void typeCodeForDebug(uint8_t c) {
-//
+//        
 //   static const uint8_t hexDigitToKeycodeLut[] = {0x0B, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x1E, 0x2E, 0x2C, 0x20, 0x13, 0x21};
 //   const uint8_t highNibble = (c & 0xf0) >> 4;
 //   const uint8_t lowNibble = c & 0x0f;
@@ -215,7 +313,8 @@ int main()
 // }
 
 // void testMessage() {
-
+//
+//     //                                    h     e     l     l     o     r     l     d -- うさぎさんこんにちは！
 //     static const uint8_t message[] = { 0x23, 0x13, 0x26, 0x26, 0x19, 0x35, 0x26, 0x20 };
 
 //     for(uint8_t i = 0; i < sizeof(message); i++) {
@@ -223,6 +322,7 @@ int main()
 //     }
 
 //     keyDown(0x70);
+//     //       !
 //     press(0x02);
 //     keyUp(0x70);
 
