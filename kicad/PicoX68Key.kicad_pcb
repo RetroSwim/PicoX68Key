@@ -116,9 +116,9 @@
 			(subtractmaskfromsilk no)
 			(outputformat 1)
 			(mirror no)
-			(drillshape 1)
+			(drillshape 0)
 			(scaleselection 1)
-			(outputdirectory "")
+			(outputdirectory "gerber/")
 		)
 	)
 	(net 0 "")
@@ -2212,7 +2212,6 @@
 		(path "/d3b140c1-c7ef-4f64-98a5-cef9fb660d63")
 		(sheetname "/")
 		(sheetfile "PicoX68Key.kicad_sch")
-		(attr through_hole)
 		(fp_line
 			(start -10.61 -23.07)
 			(end -11.09 -23.07)
@@ -6823,7 +6822,6 @@
 		(path "/9d062432-7dd1-4e02-8780-7aa1a2505ea3")
 		(sheetname "/")
 		(sheetfile "PicoX68Key.kicad_sch")
-		(attr through_hole)
 		(fp_rect
 			(start -7 0)
 			(end 7 13)
@@ -7219,7 +7217,6 @@
 		(path "/61eee8e2-a449-4d21-add8-ee414a7d4e5c")
 		(sheetname "/")
 		(sheetfile "PicoX68Key.kicad_sch")
-		(attr through_hole)
 		(fp_line
 			(start 1.33 -1.33)
 			(end 1.33 0)
@@ -12520,8 +12517,8 @@
 		(filled_polygon
 			(layer "F.Cu")
 			(pts
-				(xy 77.158088 141.719185) (xy 77.17873 141.735819) (xy 77.273441 141.83053) (xy 77.34447 141.901559)
-				(xy 77.437275 141.94) (xy 79.223832 141.94) (xy 79.290871 141.959685) (xy 79.336626 142.012489)
+				(xy 77.158088 141.719185) (xy 77.17873 141.735819) (xy 77.34447 141.901559) (xy 77.437275 141.94)
+				(xy 77.537725 141.94) (xy 79.223832 141.94) (xy 79.290871 141.959685) (xy 79.336626 142.012489)
 				(xy 79.341762 142.025679) (xy 79.376376 142.13221) (xy 79.459162 142.294686) (xy 79.566346 142.442212)
 				(xy 79.695288 142.571154) (xy 79.842814 142.678338) (xy 79.896122 142.7055) (xy 80.005285 142.761122)
 				(xy 80.005287 142.761122) (xy 80.00529 142.761124) (xy 80.09825 142.791328) (xy 80.178716 142.817474)
