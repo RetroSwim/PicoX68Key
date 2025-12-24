@@ -163,6 +163,40 @@ void doRepeat() {
     }
 }
 
+uint8_t sharpToSubBoard(uint8_t led_mask) {
+    uint8_t subBoardLeds = 0;
+    
+    if(led_mask & SHARP_LED_KANA)      subBoardLeds |= SUBBOARD_LED_KANA;
+    if(led_mask & SHARP_LED_CAPS)      subBoardLeds |= SUBBOARD_LED_CAPS;
+    if(led_mask & SHARP_LED_ROMAN)     subBoardLeds |= SUBBOARD_LED_ROMAN;
+    if(led_mask & SHARP_LED_CHORD)     subBoardLeds |= SUBBOARD_LED_CHORD;
+    if(led_mask & SHARP_LED_INS)       subBoardLeds |= SUBBOARD_LED_INS;
+    if(led_mask & SHARP_LED_HIRAGANA)  subBoardLeds |= SUBBOARD_LED_HIRAGANA;
+    if(led_mask & SHARP_LED_WIDE)      subBoardLeds |= SUBBOARD_LED_WIDE;
+    if(led_mask & SHARP_LED_STATUS)    subBoardLeds |= SUBBOARD_LED_STATUS;
+
+    return subBoardLeds;
+}
+
+static uint8_t lastSubBoardLeds = 0;
+
+void setSubBoardLeds(uint8_t led_mask) {
+    gpio_put(LED_BOARD_SPI_CS, 0);
+    spi_write_blocking(spi0, (void *)&led_mask, 1);
+    gpio_put(LED_BOARD_SPI_CS, 1);
+}
+
+void setSubBoardStatusLed(bool isOn) {
+    uint8_t newSubBoardLedBits = lastSubBoardLeds;
+    if(isOn) {
+        newSubBoardLedBits = (lastSubBoardLeds & 0x7f) | 0x80;
+    }else{
+        newSubBoardLedBits = (lastSubBoardLeds & 0x7f);
+    }
+    setSubBoardLeds(newSubBoardLedBits);
+    lastSubBoardLeds = newSubBoardLedBits;
+}
+
 int main()
 {
     uint8_t lastByte = 0;
@@ -283,14 +317,15 @@ int main()
             if((thisByte & 0x80) == 0x80) {
                 const uint8_t ledBits = thisByte & 0x7f; // lowest 7 bits
                 const uint8_t notLedBits = ~ledBits;     // 0 = on
-
+                const uint8_t newSubBoardLedBits = (lastSubBoardLeds & 0x80) | sharpToSubBoard(notLedBits); // Preserve status LED bit
                 // LEDs on HID keyboard
                 set_leds(notLedBits);
 
                 // LEDs on sub-board
-                gpio_put(LED_BOARD_SPI_CS, 0);
-                spi_write_blocking(spi0, (void *)&notLedBits, 1);
-                gpio_put(LED_BOARD_SPI_CS, 1);
+                setSubBoardLeds(newSubBoardLedBits);
+
+                lastSubBoardLeds = newSubBoardLedBits;
+                
             }
 
             lastByte = thisByte;

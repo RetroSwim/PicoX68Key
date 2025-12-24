@@ -2205,6 +2205,14 @@
 		(at 62.23 125.73)
 		(uuid "9f413821-610b-4798-9cff-bce38bd83467")
 	)
+	(no_connect
+		(at 118.11 130.81)
+		(uuid "bd1f76fb-086d-4802-a0b1-b966efc26510")
+	)
+	(no_connect
+		(at 118.11 80.01)
+		(uuid "c9e91a3b-5e8a-4b5e-b43b-081b040a8d6b")
+	)
 	(bus_entry
 		(at 127 59.69)
 		(size 2.54 -2.54)

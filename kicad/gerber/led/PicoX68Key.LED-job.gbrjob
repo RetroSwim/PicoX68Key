@@ -5,17 +5,17 @@
       "Application": "Pcbnew",
       "Version": "9.0.6"
     },
-    "CreationDate": "2025-12-24T15:43:54+10:00"
+    "CreationDate": "2025-12-24T15:42:27+10:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
-      "Name": "PicoX68Key",
-      "GUID": "5069636f-5836-4384-9b65-792e6b696361",
+      "Name": "PicoX68Key.LED",
+      "GUID": "5069636f-5836-4384-9b65-792e4c45442e",
       "Revision": "rev?"
     },
     "Size": {
       "X": 34.009,
-      "Y": 69.061
+      "Y": 42.6787
     },
     "LayerNumber": 2,
     "BoardThickness": 1.6,
@@ -28,53 +28,53 @@
       "PadToTrack": 0.01,
       "TrackToTrack": 0.01,
       "MinLineWidth": 0.25,
-      "TrackToRegion": 0.508,
-      "RegionToRegion": 0.508
+      "TrackToRegion": 0.5,
+      "RegionToRegion": 0.5
     }
   ],
   "FilesAttributes": [
     {
-      "Path": "PicoX68Key-F_Cu.gbr",
+      "Path": "PicoX68Key.LED-F_Cu.gbr",
       "FileFunction": "Copper,L1,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PicoX68Key-B_Cu.gbr",
+      "Path": "PicoX68Key.LED-B_Cu.gbr",
       "FileFunction": "Copper,L2,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PicoX68Key-F_Paste.gbr",
+      "Path": "PicoX68Key.LED-F_Paste.gbr",
       "FileFunction": "SolderPaste,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PicoX68Key-B_Paste.gbr",
+      "Path": "PicoX68Key.LED-B_Paste.gbr",
       "FileFunction": "SolderPaste,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PicoX68Key-F_Silkscreen.gbr",
+      "Path": "PicoX68Key.LED-F_Silkscreen.gbr",
       "FileFunction": "Legend,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PicoX68Key-B_Silkscreen.gbr",
+      "Path": "PicoX68Key.LED-B_Silkscreen.gbr",
       "FileFunction": "Legend,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PicoX68Key-F_Mask.gbr",
+      "Path": "PicoX68Key.LED-F_Mask.gbr",
       "FileFunction": "SolderMask,Top",
       "FilePolarity": "Negative"
     },
     {
-      "Path": "PicoX68Key-B_Mask.gbr",
+      "Path": "PicoX68Key.LED-B_Mask.gbr",
       "FileFunction": "SolderMask,Bot",
       "FilePolarity": "Negative"
     },
     {
-      "Path": "PicoX68Key-Edge_Cuts.gbr",
+      "Path": "PicoX68Key.LED-Edge_Cuts.gbr",
       "FileFunction": "Profile",
       "FilePolarity": "Positive"
     }

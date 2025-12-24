@@ -23,4 +23,5 @@ bs2_default*
 **/PicoX68Key.LED-backups/*
 **/*.lck
 **/*.bak
-
+kicad/gerber/**/*.zip
+kicad/_autosave-*
