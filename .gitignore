@@ -1,24 +1,44 @@
+# Build directories
+build/
+build-*/
+build_*
+generated/
+
+# CMake files
 CMakeLists.txt.user
 CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
+CMakeFiles/
+CMakeScripts/
 Makefile
 cmake_install.cmake
+cmake-build-debug/
 install_manifest.txt
+
+# Pico SDK/Toolchain
+.pio/
+.elf
+.bin
+.uf2
+.hex
+.map
+.dis
+Testing
 compile_commands.json
 CTestTestfile.cmake
 _deps
-CMakeUserPresets.json
 bs2_default*
-*.bin
-*.dis
-*.elf
-*.elf.map
-*.hex
-*.uf2
 .ninja_deps
 .ninja_log
+
+# IDE Settings
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# KiCad Files
 **/PicoX68Key-backups/*
 **/PicoX68Key.LED-backups/*
 **/*.lck

@@ -83,10 +83,6 @@ void littleBlink() {
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
 }
 
-void ledOn(bool isOn) {
-    gpio_put(PICO_DEFAULT_LED_PIN, isOn);
-}
-
 // Key repeat timer code
 bool timerCallback(struct repeating_timer *t) {
     doRepeat();
@@ -196,6 +192,13 @@ void setSubBoardStatusLed(bool isOn) {
     setSubBoardLeds(newSubBoardLedBits);
     lastSubBoardLeds = newSubBoardLedBits;
 }
+
+
+void ledOn(bool isOn) {
+    gpio_put(PICO_DEFAULT_LED_PIN, isOn);
+    setSubBoardStatusLed(true);
+}
+
 
 int main()
 {
@@ -320,8 +323,7 @@ int main()
             // bit 1   ローマ字 (Roman characters)
             // bit 0   かな (Kana)
             if((thisByte & 0x80) == 0x80) {
-                const uint8_t ledBits = thisByte & 0x7f; // lowest 7 bits
-                const uint8_t notLedBits = ~ledBits;     // 0 = on
+                const uint8_t notLedBits = ~thisByte;     // 0 = on
                 const uint8_t newSubBoardLedBits = (lastSubBoardLeds & 0x80) | sharpToSubBoard(notLedBits); // Preserve status LED bit
                 // LEDs on HID keyboard
                 set_leds(notLedBits);
