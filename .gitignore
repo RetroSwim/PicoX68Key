@@ -29,6 +29,7 @@ _deps
 bs2_default*
 .ninja_deps
 .ninja_log
+pico-sdk/
 
 # IDE Settings
 .vscode/
