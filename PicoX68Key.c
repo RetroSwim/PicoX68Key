@@ -35,6 +35,7 @@
 #include "tusb.h"
 #include "PicoX68Key.h"
 #include "bsp/board_api.h"
+#include "pico/cyw43_arch.h"
 
 #include "include/layout_us.h"
 
@@ -197,6 +198,27 @@ void setSubBoardStatusLed(bool isOn) {
     lastSubBoardLeds = newSubBoardLedBits;
 }
 
+static bool isW = false;
+
+void setOnboardLed(bool isOn) {
+
+}
+
+void detectW() {
+
+    adc_init();
+    adc_gpio_init(29);
+    adc_select_input(3);
+
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+
+    sleep_us(100);
+
+
+}
+
 int main()
 {
     uint8_t lastByte = 0;
@@ -218,7 +240,12 @@ int main()
     spi_init(spi0, 1000000);
     gpio_set_function(LED_BOARD_SPI_CLK, GPIO_FUNC_SPI);
     gpio_set_function(LED_BOARD_SPI_MOSI, GPIO_FUNC_SPI);
+    
     gpio_init(LED_BOARD_SPI_CS);
+    gpio_set_dir(LED_BOARD_SPI_CS, GPIO_OUT);
+    gpio_put(LED_BOARD_SPI_CS, 1);
+    lastSubBoardLeds = 0;
+    setSubBoardLeds(0);
 
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
