@@ -196,7 +196,7 @@ void setSubBoardStatusLed(bool isOn) {
 
 void ledOn(bool isOn) {
     gpio_put(PICO_DEFAULT_LED_PIN, isOn);
-    setSubBoardStatusLed(true);
+    setSubBoardStatusLed(isOn);
 }
 
 
