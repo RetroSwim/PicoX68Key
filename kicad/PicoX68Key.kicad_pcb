@@ -9509,6 +9509,18 @@
 			(justify left bottom mirror)
 		)
 	)
+	(gr_text "OE"
+		(at 87.05 133.5 90)
+		(layer "B.SilkS")
+		(uuid "f1975013-2f28-4a52-89f2-5bcc349dce8a")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right bottom mirror)
+		)
+	)
 	(segment
 		(start 69.342 82.55)
 		(end 70.817 81.075)
