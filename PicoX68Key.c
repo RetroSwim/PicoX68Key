@@ -11,6 +11,9 @@
 // X68000 keyboard protocol information from tmk_keyboard by tmk
 // https://github.com/tmk/tmk_keyboard/wiki/Sharp-Keyboard
 //
+// SharpKey Technical Reference by Philip Smart
+// https://eaw.app/sharpkey-technicalguide/
+//
 // Requirements:
 // - Raspberry Pi Pico
 // - Level shifter (only really necessary for the input, the X68K keyboard port receives 3v3 just fine)
@@ -25,8 +28,9 @@
 // - GND (pin 3,8,13,18,etc)  - Pin 7 (GND)
 //
 // Optional:
-// - SPI0 on pins MOSI@GP19 SCK@GP18 CS@GP17 for a shift register to show all
+// - SPI0 on pins MOSI@GP19 SCK@GP18 CS@GP17 for a shift register (e.g. 74HCT595) to show all
 //   the X68000 keyboard LEDs.
+// - PWM on pin GP16 to control the brightness of the LEDs (e.g. via ~OE on 74HCT595)
 
 #include <stdio.h>
 #include "pico/stdlib.h"
@@ -298,7 +302,7 @@ int main()
 
                 const uint8_t brightnessByte = thisByte & 0x03;
 
-                // TODO: set a PWM pin here for OE on the shift register
+                setBrightness(brightnessByte);
 
             }
 

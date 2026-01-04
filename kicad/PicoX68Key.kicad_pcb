@@ -9136,7 +9136,7 @@
 			(justify left bottom mirror)
 		)
 	)
-	(gr_text "Designed by RetroSwim\nThanks to Zuofo, Guddler, tmk"
+	(gr_text "Designed by RetroSwim\nThanks to Zuofo, Guddler, tmk, P.Smart"
 		(at 97.25 86.4 90)
 		(layer "B.SilkS")
 		(uuid "1deeefa6-cfe1-45e6-bbb8-98e1d28f8565")
