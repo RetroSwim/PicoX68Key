@@ -32,6 +32,8 @@
 #include "pico/stdlib.h"
 #include "hardware/uart.h"
 #include "hardware/spi.h"
+#include "hardware/gpio.h"
+#include "hardware/pwm.h"
 #include "tusb.h"
 #include "PicoX68Key.h"
 #include "bsp/board_api.h"
@@ -55,6 +57,7 @@
 #define LED_BOARD_SPI_MOSI 19
 #define LED_BOARD_SPI_CLK 18
 #define LED_BOARD_SPI_CS 17
+#define LED_BOARD_PWM_PIN 16
 
 #define DEFAULT_KEY_REPEAT_DELAY 500 //ms
 #define DEFAULT_KEY_REPEAT_RATE 110  //ms
@@ -199,6 +202,21 @@ void ledOn(bool isOn) {
     setSubBoardStatusLed(isOn);
 }
 
+static uint pwmSliceNumber = 0;
+static uint pwmChannel = 0;
+
+void setBrightness(uint8_t level) {
+    // ~OE is active low. 0% duty cycle = full brightness.
+    uint16_t dutyCycle = 0;
+    switch(level) {
+        case 0: dutyCycle = 0;    break;  // 100% brightness
+        case 1: dutyCycle = 2500;  break; // 75% brightness
+        case 2: dutyCycle = 5000;  break; // 50% brightness
+        case 3: dutyCycle = 7500;  break; // 25% brightness
+        default: dutyCycle = 0;    break;  // otherwise on
+    }
+    pwm_set_chan_level(pwmSliceNumber, pwmChannel, dutyCycle);
+}
 
 int main()
 {
@@ -231,6 +249,13 @@ int main()
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
+    gpio_set_function(LED_BOARD_PWM_PIN, GPIO_FUNC_PWM);
+    pwmSliceNumber = pwm_gpio_to_slice_num(LED_BOARD_PWM_PIN);
+    pwmChannel = pwm_gpio_to_channel(LED_BOARD_PWM_PIN);
+    pwm_set_wrap(pwmSliceNumber, 10000);
+    pwm_set_chan_level(pwmSliceNumber, pwmChannel, 0); // Full brightness
+    pwm_set_enabled(pwmSliceNumber, true);
+    
     add_repeating_timer_ms(DEFAULT_KEY_REPEAT_RATE, timerCallback, NULL, &repeatTimer);
     
     while (true) {
@@ -259,6 +284,21 @@ int main()
                 mouseDx = 0;
                 mouseDy = 0;
                 for (int i = 0; i < 3; i++) uart_putc(MOUSE_UART_ID, mousePacket[i]);
+
+            }
+
+            // 0x5x sets LED brightness
+            if((thisByte & 0xfc) == 0x5c)
+            {
+                // last 2 bits
+                // 00 full brightness
+                // 01 75%
+                // 10 50%
+                // 11 25%
+
+                const uint8_t brightnessByte = thisByte & 0x03;
+
+                // TODO: set a PWM pin here for OE on the shift register
 
             }
 

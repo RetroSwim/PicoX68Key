@@ -49,7 +49,8 @@ target_link_libraries(PicoX68Key
         pico_stdlib
         tinyusb_host
         tinyusb_board
-        hardware_spi)
+        hardware_spi
+        hardware_pwm)
 
 # Add the standard include files to the build
 target_include_directories(PicoX68Key PRIVATE
