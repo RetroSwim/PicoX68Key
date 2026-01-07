@@ -113,6 +113,33 @@ void keyUp(uint8_t c) {
     uart_putc(KB_UART_ID, c | 0x80);
 }
 
+static uint pwmSliceNumber = 0;
+static uint pwmChannel = 0;
+
+static uint8_t lastBrightness = 0;
+
+void setBrightness(uint8_t level) {
+    // ~OE is active low. 0% duty cycle = full brightness.
+    uint16_t dutyCycle = 0;
+    switch(level) {
+        case 0: dutyCycle = 0;    break;  // 100% brightness
+        case 1: dutyCycle = 6000;  break; // ~75% brightness
+        case 2: dutyCycle = 8000;  break; // ~50% brightness
+        case 3: dutyCycle = 9500;  break; // ~25% brightness
+        default: dutyCycle = 0;    break;  // otherwise on
+    }
+    pwm_set_chan_level(pwmSliceNumber, pwmChannel, dutyCycle);
+    lastBrightness = level;
+}
+
+void cycleBrightness() {
+    if(lastBrightness == 3){
+        setBrightness(0);
+    }else{
+        setBrightness(lastBrightness + 1);
+    }
+}
+
 // True while Left GUI (Windows) key is being held. Unlocks additional keys.
 bool isSpecial = false;
 
@@ -129,6 +156,13 @@ void handleKey(uint8_t keycode, uint8_t state) {
     newKeyCode = keymapping[keycode];
 
     if(isSpecial) {
+        // Brightness key
+        if(newKeyCode == 0x2e && state == USBKEY_PRESSED){
+            cycleBrightness();
+            return;
+        }
+
+        // Other GUI key combos
         for(uint8_t i = 0; i < sizeof(altKeysUSB); i++) {
             if(altKeysUSB[i] == keycode) {
                 newKeyCode = altKeyCodes[i];
@@ -206,21 +240,6 @@ void ledOn(bool isOn) {
     setSubBoardStatusLed(isOn);
 }
 
-static uint pwmSliceNumber = 0;
-static uint pwmChannel = 0;
-
-void setBrightness(uint8_t level) {
-    // ~OE is active low. 0% duty cycle = full brightness.
-    uint16_t dutyCycle = 0;
-    switch(level) {
-        case 0: dutyCycle = 0;    break;  // 100% brightness
-        case 1: dutyCycle = 2500;  break; // 75% brightness
-        case 2: dutyCycle = 5000;  break; // 50% brightness
-        case 3: dutyCycle = 7500;  break; // 25% brightness
-        default: dutyCycle = 0;    break;  // otherwise on
-    }
-    pwm_set_chan_level(pwmSliceNumber, pwmChannel, dutyCycle);
-}
 
 int main()
 {
@@ -257,7 +276,7 @@ int main()
     pwmSliceNumber = pwm_gpio_to_slice_num(LED_BOARD_PWM_PIN);
     pwmChannel = pwm_gpio_to_channel(LED_BOARD_PWM_PIN);
     pwm_set_wrap(pwmSliceNumber, 10000);
-    pwm_set_chan_level(pwmSliceNumber, pwmChannel, 0); // Full brightness
+    pwm_set_chan_level(pwmSliceNumber, pwmChannel, 9500); // Low brightness initially
     pwm_set_enabled(pwmSliceNumber, true);
     
     add_repeating_timer_ms(DEFAULT_KEY_REPEAT_RATE, timerCallback, NULL, &repeatTimer);
